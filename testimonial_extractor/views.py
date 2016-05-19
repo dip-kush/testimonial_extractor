@@ -2,14 +2,14 @@ from django.template.loader import get_template
 from django.template import Context
 from django.http import HttpResponse
 from django.shortcuts import render
+from django.conf import settings
 from BeautifulSoup import BeautifulSoup
 import re
 import urllib2
 import json,os
 import requests
 import urlparse
-
-
+import weasyprint
 
 class Testimonial():
     def __init__(self, name, image, text):
@@ -29,7 +29,7 @@ def start(request):
     s = requests.Session()
     base_url = "http://students.nitk.ac.in"
     r = s.get("http://students.nitk.ac.in/smriti/profiles/"+path)
-    soup = BeautifulSoup(r.text)    
+    soup = BeautifulSoup(r.text)
     name = soup.findAll("h4")[0].text
 
     print "==============="
@@ -41,7 +41,7 @@ def start(request):
 
     testimonials_urls = soup.findAll("a", attrs = {"href": re.compile("/smriti/testimonial/.")})
     urls = []
-    all_testimonials = []    
+    all_testimonials = []
     for url in testimonials_urls:
         request_url = base_url+url.attrs[0][1]
         r = s.get(request_url)
@@ -58,3 +58,15 @@ def start(request):
         testi = Testimonial(testi_name, testi_image_url, testimonial)
         all_testimonials.append(testi)
     return render(request, "index.html", {"name": name, "image": profile_image_url, "testimonials": all_testimonials})
+
+def weasyprint_pdf(request, rollno):
+        base_url = "http://students.nitk.ac.in/smriti/pdfs/"
+        request_url = base_url + rollno.upper()
+        s = requests.Session()
+        html = s.get(request_url)
+        pdf=weasyprint.HTML(
+            string=html.content,
+            base_url=request.build_absolute_uri("http://students.nitk.ac.in/")
+            ).write_pdf(stylesheets=[weasyprint.CSS(settings.STATIC_ROOT +  '/css/pdf.css')])
+        response = HttpResponse(pdf, content_type="application/pdf")
+        return response
