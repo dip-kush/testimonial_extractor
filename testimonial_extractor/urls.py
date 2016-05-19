@@ -1,5 +1,5 @@
 from django.conf.urls import patterns, include, url
-from views import start,sample
+from views import start,sample, weasyprint_pdf
 from django.contrib import admin
 admin.autodiscover()
 
@@ -10,5 +10,6 @@ urlpatterns = patterns('',
 
     url(r'^admin/', include(admin.site.urls)),
     url(r'^roll/', start),
-    url(r'^sample', sample)
+    url(r'^sample', sample),
+    url(r'^pdf/(?P<rollno>.+)', weasyprint_pdf),
 )
